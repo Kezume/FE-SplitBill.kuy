@@ -12,6 +12,9 @@ function Groups() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showGroupModal, setShowGroupModal] = useState(false)
+  const [showJoinModal, setShowJoinModal] = useState(false)
+  const [inviteCode, setInviteCode] = useState('')
+  const [joinLoading, setJoinLoading] = useState(false)
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -31,7 +34,7 @@ function Groups() {
           return
         }
 
-        const res = await fetch(`http://localhost:8080/api/v1/groups/list?page=${page}&limit=9`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/groups/list?page=${page}&limit=9`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -41,7 +44,7 @@ function Groups() {
         const result = await res.json()
 
         if (!res.ok) {
-          throw new Error(result.error || 'Gagal memuat daftar grup')
+          throw new Error(result.error?.message || result.error || 'Gagal memuat daftar grup')
         }
 
         setGroupsData(result.data || [])
@@ -62,6 +65,37 @@ function Groups() {
       currency: 'IDR',
       minimumFractionDigits: 0
     }).format(number)
+  }
+
+  const handleJoinGroup = async () => {
+    if (!inviteCode.trim()) {
+      showToast('Invite code harus diisi!', 'error')
+      return
+    }
+    setJoinLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/groups/join`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ invite_code: inviteCode.trim() })
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        throw new Error(result.error?.message || 'Gagal join grup')
+      }
+      setShowJoinModal(false)
+      setInviteCode('')
+      showToast(`Berhasil join grup ${result.data.name}!`, 'success')
+      setRefreshKey(prev => prev + 1)
+    } catch (err) {
+      showToast(err.message, 'error')
+    } finally {
+      setJoinLoading(false)
+    }
   }
 
   return (
@@ -88,13 +122,22 @@ function Groups() {
             <h2 className="font-headline-lg uppercase italic tracking-tighter text-3xl">
               SEMUA GRUP LO
             </h2>
-            <button
-              onClick={() => setShowGroupModal(true)}
-              className="flex items-center gap-2 bg-primary-container text-black font-headline-lg text-lg border-4 border-black px-6 py-2 neubrutal-shadow active-press hover:bg-yellow-400 transition-all"
-            >
-              <span className="material-symbols-outlined">add_box</span>
-              <span className="hidden md:inline">BUAT GRUP</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowJoinModal(true)}
+                className="flex items-center gap-2 bg-secondary-fixed text-black font-headline-lg text-lg border-4 border-black px-6 py-2 neubrutal-shadow active-press hover:bg-green-300 transition-all"
+              >
+                <span className="material-symbols-outlined">group_add</span>
+                <span className="hidden md:inline">JOIN GRUP</span>
+              </button>
+              <button
+                onClick={() => setShowGroupModal(true)}
+                className="flex items-center gap-2 bg-primary-container text-black font-headline-lg text-lg border-4 border-black px-6 py-2 neubrutal-shadow active-press hover:bg-yellow-400 transition-all"
+              >
+                <span className="material-symbols-outlined">add_box</span>
+                <span className="hidden md:inline">BUAT GRUP</span>
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -191,6 +234,52 @@ function Groups() {
             setRefreshKey(prev => prev + 1)
           }} 
         />
+
+        {/* Join Group Modal */}
+        {showJoinModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white border-4 border-black w-full max-w-md neubrutal-shadow">
+              <div className="bg-secondary-fixed border-b-4 border-black p-4 flex justify-between items-center">
+                <h2 className="font-space font-black uppercase tracking-tighter text-2xl flex items-center gap-2">
+                  <span className="material-symbols-outlined">group_add</span>
+                  JOIN GRUP
+                </h2>
+                <button onClick={() => { setShowJoinModal(false); setInviteCode('') }} className="hover:bg-green-300 p-1 border-2 border-transparent hover:border-black transition-colors">
+                  <span className="material-symbols-outlined font-black">close</span>
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <p className="font-bold text-zinc-600">Masukkan invite code dari temen lo yang punya grup:</p>
+                <input
+                  type="text"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === 'Enter' && handleJoinGroup()}
+                  placeholder="Contoh: XK9-PUNK-SPLIT"
+                  className="w-full border-4 border-black p-3 font-space font-black text-xl text-center uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-yellow-400"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="p-6 border-t-4 border-black bg-zinc-50 flex gap-4">
+                <button 
+                  onClick={() => { setShowJoinModal(false); setInviteCode('') }}
+                  className="flex-1 bg-white border-4 border-black py-3 font-space font-black uppercase active:translate-y-1 hover:bg-zinc-200 transition-all shadow-[4px_4px_0_0_#000] active:shadow-none"
+                >
+                  BATAL
+                </button>
+                <button 
+                  onClick={handleJoinGroup}
+                  disabled={joinLoading}
+                  className="flex-1 bg-secondary-fixed text-black border-4 border-black py-3 font-space font-black uppercase active:translate-y-1 hover:bg-green-300 transition-all shadow-[4px_4px_0_0_#000] active:shadow-none disabled:opacity-50"
+                >
+                  {joinLoading ? 'JOINING...' : 'GABUNG!'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
       <Footer />
     </div>

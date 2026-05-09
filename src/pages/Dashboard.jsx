@@ -33,7 +33,7 @@ function Dashboard() {
           return
         }
 
-        const resDash = await fetch('http://localhost:8080/api/v1/dashboard/', {
+        const resDash = await fetch(`${import.meta.env.VITE_API_URL}/dashboard/`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -41,12 +41,12 @@ function Dashboard() {
         })
         const dashResult = await resDash.json()
         if (!resDash.ok) {
-          throw new Error(dashResult.error || 'Gagal memuat dashboard')
+          throw new Error(dashResult.error?.message || dashResult.error || 'Gagal memuat dashboard')
         }
         setDashboardData(dashResult.data)
 
         // Fetch Real Groups Data
-        const resGroups = await fetch('http://localhost:8080/api/v1/groups/list', {
+        const resGroups = await fetch(`${import.meta.env.VITE_API_URL}/groups/list`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`

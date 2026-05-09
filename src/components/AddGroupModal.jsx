@@ -20,7 +20,7 @@ function AddGroupModal({ isOpen, onClose, onSuccess }) {
 
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:8080/api/v1/groups/', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/groups/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -34,7 +34,7 @@ function Profile() {
           return
         }
 
-        const res = await fetch('http://localhost:8080/api/v1/users/profile', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/users/profile`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -72,7 +72,7 @@ function Profile() {
     try {
       const token = localStorage.getItem('token')
       if (token) {
-        await fetch('http://localhost:8080/api/v1/auth/logout', {
+        await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` }
         })
@@ -98,7 +98,7 @@ function Profile() {
     
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:8080/api/v1/users/profile', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +128,7 @@ function Profile() {
     setIsDeleting(true)
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:8080/api/v1/users/profile', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/profile`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
